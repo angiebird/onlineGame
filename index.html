@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      //form input { border: 0; padding: 10px; width: 80%; margin-right: .5%; }
+      form button { width: 8%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      form input#name{border: 0; padding: 10px; width: 15%; margin-right: .5%;}
+      form input#text{border: 0; padding: 10px; width: 75%; margin-right: .5%;}
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+  posMap = {}
+  myPos = {x: 100, y:75, size: 50, name: "angie"};
+  $(document).ready(function(){
+      var socket = io();
+      $('form').submit(function(){
+          socket.emit('msg', {name: $('#name').val(), text: $('#text').val()});
+          $('#text').val('');
+          return false;
+      });
+      var speed = 10;
+      $(window).keydown(function(e) {
+          if(e.keyCode == 37){
+            //left
+            myPos.x -= speed;
+            myPos.name = $('#name').val();
+            socket.emit('pos', myPos);
+          }
+          else if(e.keyCode == 38){
+            //up
+            myPos.y -= speed;
+            myPos.name = $('#name').val();
+            socket.emit('pos', myPos);
+          }
+          else if(e.keyCode == 39){
+            //right
+            myPos.x += speed;
+            myPos.name = $('#name').val();
+            socket.emit('pos', myPos);
+          }
+          else if(e.keyCode == 40){
+            //down
+            myPos.y += speed;
+            myPos.name = $('#name').val();
+            socket.emit('pos', myPos);
+          }
+          //return false;
+      });
+      socket.on('msg', function(msg){
+          $('#messages').append($('<li>').text(msg));
+      });
+      socket.on('pos', function(pos){
+          posMap[pos.name] = pos;
+          update(posMap);
+      });
+  });
+  </script>
+  <script>
+  function draw(ctx, pos){
+    ctx.beginPath();
+    ctx.arc(pos.x,pos.y,pos.size,0,2*Math.PI);
+    ctx.stroke()
+    ctx.fillText(pos.name,pos.x - pos.size,pos.y);
+  }
+  function update(posMap){
+    var c=document.getElementById("myCanvas");
+    var ctx=c.getContext("2d");
+    ctx.font="30px Arial";
+    ctx.clearRect(0, 0, c.width, c.height);
+    for(var key in posMap){
+        pos = posMap[key];
+        draw(ctx, pos);
+    }
+  }
+  </script>
+  <body>
+    <canvas id="myCanvas" width="600" height="600"></canvas>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="name" autocomplete="off" width=10%;/>
+      <input id="text" autocomplete="off" width="80%" border="0"; padding="10px";/><button type = submit>Send</button>
+    </form>
+  </body>
+</html>
